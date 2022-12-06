@@ -1,8 +1,7 @@
 from django.shortcuts import render,redirect
 from .models import Details
-from django.urls import reverse
-from django.http import HttpResponse,HttpResponseRedirect
-from django.template import loader
+from django.contrib import messages
+from django.core.mail import send_mail
 # Create your views here.
 def signup(request):
     if request.method=="POST":
@@ -14,7 +13,8 @@ def signup(request):
         image = request.FILES["image"]
         file = request.FILES["file"]
         Details(name=name,email=email,password=password,number=number,address=address,image=image,file=file).save()
-    return render(request,'sign_up.html')
+        messages.success(request, 'Sucessfully signed up.')
+    return render(request,'index.html')
 
 def login(request):
     if request.method=='POST':
@@ -26,6 +26,7 @@ def login(request):
             t=Details.objects.get(email=email,password=password)
             print(email)
             print(password)
+            messages.success(request, 'You have logged in')
             return redirect('/home/')
 
         except:
@@ -48,6 +49,13 @@ def update(request, id):
         x.number = request.POST['number']
         x.address = request.POST['address']
         x.save()
+        try:
+            x.save()
+            messages.success(request, 'Profile details updated.')
+            return redirect('/home/')
+        except:
+            return redirect('/update/<int:id>/')
+        # messages.warning(request, 'Are you sure you want edit details')
     return render(request, 'update.html', {'x':x})
 
     # template = loader.get_template(update.html)
@@ -58,27 +66,17 @@ def update(request, id):
 def delete(request, id):
     y=Details.objects.get(id=id)
     y.delete()
+    messages.warning(request, 'You have deleted a user')
     return redirect('/home/')
-    
-    
-    
-    
-    from django.db import models
 
-
-
-class Details(models.Model):
-
-    name= models.CharField(max_length=255)
-    email=models.EmailField(max_length=255)
-    password=models.CharField(max_length=200)
-    number=models.BigIntegerField()
-    address=models.CharField(max_length=255)
-    file = models.FileField(upload_to='documents/', null=True)
-    image = models.ImageField(upload_to='images/', null=True)
-    
-    
-    
-    
-    
-    
+def mail(request, id):
+    x=Details.objects.get(id=id)
+    send_mail(
+        'Subject here',
+        'Hello There',
+        'aakashbsurya@gmail.com',
+        [x.email],
+        fail_silently=False,
+    )
+    messages.info(request,"sucessfuilly send mail")
+    return redirect("/home/")
